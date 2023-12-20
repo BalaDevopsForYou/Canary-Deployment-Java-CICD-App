@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        git credentialsId: 'jenkins-github', url: 'https://github.com/BalaDevopsForYou/java-kubernetes-maven-web-app.git'
+                        git credentialsId: 'jenkins-github', url: 'https://github.com/BalaDevopsForYou/CICD-ECR-ARGOCD.git'
                     } catch (Exception gitException) {
                         error "Git checkout failed: ${gitException.message}"
                     }
@@ -106,7 +106,6 @@ stage('sonar-quality-gate-check') {
                 //withCredentials([string(credentialsId: 'aws-ecr-credentials', variable: 'AWS_ECR_CREDENTIALS')]) {
                   //  sh "aws ecr get-login-password --region your-aws-region | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                 //}
-                
                     sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY"
                     sh "docker build -t ${IMAGE_VERSION} . "
 
@@ -150,4 +149,26 @@ stage('sonar-quality-gate-check') {
             }
         }
     }
+    
+ post {
+    success {
+        slackSend(
+            channel: '#monitoring',
+            color: 'good', // 'good' is the color for success
+            message: "${JOB_NAME} - Build #${BUILD_NUMBER} - Status: ${currentBuild.result} :smile:",
+            teamDomain: 'devops-gangworkspace',
+            tokenCredentialId: 'slack-jenkins'
+        )
+    }
+    failure {
+        slackSend(
+            channel: '#monitoring',
+            color: 'danger', // 'danger' is the color for failure
+            message: "${JOB_NAME} - Build #${BUILD_NUMBER} - Status: ${currentBuild.result} :disappointed:",
+            teamDomain: 'devops-gangworkspace',
+            tokenCredentialId: 'slack-jenkins'
+        )
+    }
+}
+
 }
