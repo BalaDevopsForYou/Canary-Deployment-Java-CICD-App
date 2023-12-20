@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        NEW_IMAGE_NAME = "balaknuthi/cicd-java-app"
+        NEW_IMAGE_NAME = "ecr-cicd"
     }
     tools {
         maven 'MAVEN-3.9.6'
@@ -95,27 +95,34 @@ stage('sonar-quality-gate-check') {
         }
 
         stage('Build & Publish Docker images') {
-            steps {
-                script {
-                    def IMAGE_VERSION = "${NEW_IMAGE_NAME}:${BUILD_NUMBER}"
-                    try {
-                        sh "docker build -t ${IMAGE_VERSION} . "
-                        withCredentials([string(credentialsId: 'jenkins_docker_cred', variable: 'docker_credentials_for_jenkins')]) {
-                            try {
-                                sh '''
-                                    echo ${docker_credentials_for_jenkins} | docker login -u balaknuthi --password-stdin
-                                '''
-                            } catch (Exception dockerLoginException) {
-                                error "Docker login failed: ${dockerLoginException.message}"
-                            }
-                        }
-                        sh "docker push ${IMAGE_VERSION}"
-                    } catch (Exception dockerException) {
-                        error "Docker build/push failed: ${dockerException.message}"
-                    }
-                }
+    steps {
+        script {
+            def IMAGE_VERSION = "${NEW_IMAGE_NAME}:${BUILD_NUMBER}"
+            def ECR_REGISTRY = "838127586179.dkr.ecr.us-east-1.amazonaws.com"
+            
+            
+            try {
+                
+                // Login to Amazon ECR
+                //withCredentials([string(credentialsId: 'aws-ecr-credentials', variable: 'AWS_ECR_CREDENTIALS')]) {
+                  //  sh "aws ecr get-login-password --region your-aws-region | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                //}
+                
+                    sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY"
+                    sh "docker build -t ${IMAGE_VERSION} . "
+
+                // Tag the image for Amazon ECR
+                sh "docker tag ${IMAGE_VERSION} ${ECR_REGISTRY}/${IMAGE_VERSION}"
+                
+                // Push the image to Amazon ECR
+                sh "docker push ${ECR_REGISTRY}/${IMAGE_VERSION}"
+            } catch (Exception dockerException) {
+                error "Docker build/push failed: ${dockerException.message}"
             }
         }
+    }
+}
+
 
         stage('Update Deployment File') {
             environment {
@@ -144,3 +151,4 @@ stage('sonar-quality-gate-check') {
         }
     }
 }
+
