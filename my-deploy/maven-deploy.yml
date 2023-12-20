@@ -18,10 +18,12 @@ spec:
   spec: 
     containers:
     - name: mavenwebappcontainer
-      image: ecr-cicd:117
+      image: 838127586179.dkr.ecr.us-east-1.amazonaws.com/ecr-cicd:117
       imagePullPolicy: Always
       ports:
       - containerPort: 8080
+    imagePullSecrets:
+    - name: ecr-registry-secret
 ---
 apiVersion: v1
 kind: Service
@@ -34,5 +36,3 @@ spec:
   ports:
    - port: 80
      targetPort: 8080
-...
-
