@@ -1,8 +1,16 @@
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: canary-ns
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
- name: mavenwebappdeployment
+ name: javawebappdeploymentv1
+ namespace: canary-ns
+ labels:
+   app: mavenwebapp
 spec:
  replicas: 2
  strategy: 
@@ -10,6 +18,7 @@ spec:
  selector: 
    matchLabels: 
      app: mavenwebapp
+     version: v1.0.0
  template:
   metadata:
    name: mavenwebapppod
@@ -17,7 +26,7 @@ spec:
      app: mavenwebapp	 
   spec: 
     containers:
-    - name: mavenwebappcontainer
+    - name: mavenwebapp
       image: 838127586179.dkr.ecr.us-east-1.amazonaws.com/ecr-cicd:139
       imagePullPolicy: Always
       ports:
@@ -29,10 +38,37 @@ apiVersion: v1
 kind: Service
 metadata:
  name: mavenwebappsvc
+ namespace: canary-ns
+ labels:
+   app: mavenwebapp
+   version: v1.0.0
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
    app: mavenwebapp
   ports:
    - port: 80
      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mavenwebapp
+  namespace: canary-ns
+  labels:
+    app: mavenwebapp
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+    - host: canary-depolyment.baladevopsforyou.com  
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mavenwebappsvc
+                port:
+                  number: 80
+---
