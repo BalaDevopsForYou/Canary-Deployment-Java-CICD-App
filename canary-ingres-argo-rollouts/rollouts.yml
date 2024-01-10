@@ -1,0 +1,73 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: my-java-app
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: my-java-app
+  template:
+    metadata:
+      labels:
+        app: my-java-app
+    spec:
+      containers:
+      - name: my-java-app
+        image: balaknuthi/cicd-java-app:113
+        ports:
+        - containerPort: 8080
+  strategy:
+    canary:
+      steps:
+      - setWeight: 10
+      - pause: {}
+      - setWeight: 20
+      - pause: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-java-app-stable
+  labels:
+    app: my-java-app
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: my-java-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-java-app-canary
+  labels:
+    app: my-java-app
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: my-java-app
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-java-app-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/affinity-mode: persistent
+spec:
+  rules:
+  - host: mycanaryapp.baladevopsforyou.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: my-java-app-stable
+            port:
+              number: 80
