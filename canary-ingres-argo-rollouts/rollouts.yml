@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: my-java-app
-        image: rishiranjan1992/java-web-app:v1
+        image: balaknuthi/cicd-java-app:113
         ports:
         - containerPort: 8080
   strategy:
