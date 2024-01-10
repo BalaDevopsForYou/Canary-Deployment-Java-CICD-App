@@ -68,6 +68,6 @@ spec:
         path: "/"
         backend:
           service:
-            name: my-java-app-stable
+            name: my-java-app-canary
             port:
               number: 80
