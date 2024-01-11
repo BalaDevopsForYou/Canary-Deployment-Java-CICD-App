@@ -28,20 +28,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-java-app-stable
-  labels:
-    app: my-java-app
-spec:
-  ports:
-  - port: 80
-    targetPort: 8080
-  selector:
-    app: my-java-app
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-java-app-canary
+  name: my-java-app-svc
   labels:
     app: my-java-app
 spec:
@@ -68,6 +55,6 @@ spec:
         path: "/"
         backend:
           service:
-            name: my-java-app-canary
+            name: my-java-app-svc
             port:
               number: 80
